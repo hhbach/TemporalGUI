@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:WindowedApplication xmlns:fx="http://ns.adobe.com/mxml/2009" 
+					   xmlns:s="library://ns.adobe.com/flex/spark" 
+					   xmlns:mx="library://ns.adobe.com/flex/mx" width="1366" height="768">
+	<fx:Style source="TemporalGUI.css"/>
+	
+	
+
+	<fx:Declarations>
+		<s:Sequence id="movePanelRight" target="{sidePanel}" duration="300">
+			<s:Move xTo="200"/>
+		</s:Sequence>
+		
+		<s:Sequence id="movePanelLeft" target="{sidePanel}" duration="300">
+			<s:Move xTo="-200"/>
+		</s:Sequence>
+	</fx:Declarations>
+	
+
+
+
+
+
+	
+	<mx:Canvas id="worldLineTime" backgroundColor="#979795" height="20" width="100%" y="25" alpha=".5" left="20"/>
+	<mx:Canvas id="worldLineTick" backgroundColor="#979795" height="20" width="100%" y="47" alpha=".5" initialize="generateTicks(event)" left="20"/>
+		
+	
+
+	
+	<s:Scroller left="0" top="75" height="670" width="1355">
+
+	<s:Group id="myGroup" left="10"  width="{groupWidth}" height="{groupHeight}" >
+		<mx:Canvas  id="drawCanvas">
+		</mx:Canvas>
+
+	</s:Group>
+	</s:Scroller>
+	
+	
+	<mx:MenuBar id="myMenuBar" x="0" y="3" width="100%" itemClick="insertTemplate(event)"
+				labelField="@label" textAlign="left">
+		<fx:XMLList>
+			<menuitem label="File">
+				<menuitem label="New Project"/>
+				<menuitem label="Generate Temporal"/>
+			</menuitem>
+			<menuitem label="Edit">
+				<menuitem label = "group">
+					<menuitem label="merge"/>
+					<menuitem label="break"/>
+				</menuitem>
+			</menuitem>
+			<menuitem label="Insert">
+				<menuitem label="New Template" id="newTemplate" />
+			</menuitem>
+			<menuitem label="View"/>
+			<menuitem label="Help">
+				<menuitem label="SubMenuItem D-1" 
+						  type="radio" groupName="one"/>
+				<menuitem label="SubMenuItem D-2" 
+						  type="radio" groupName="one"
+						  selected="true"/>
+				<menuitem label="SubMenuItem D-3" 
+						  type="radio" groupName="one"/>
+			</menuitem>
+		</fx:XMLList>
+	</mx:MenuBar>
+	
+	<mx:Slider id="mySlider" right="10" bottom="10" width="166" height="20"
+			   change="scaleGroup();generateTickNumbers(event)" labels="[.01X, 3X]" liveDragging="true" maximum="3"
+			   minimum=".01" value="1" initialize="generateTickNumbers(event)">
+	</mx:Slider>
+	<mx:Canvas id="sidePanel" x="-200" y="193" width="175" height="400" borderStyle="solid" backgroundColor="White" mouseDown="moveSidePanel(event)" mouseUp="stopMoveSidePanel(event)">
+		<mx:Button x="95" y="372" label="Okay" click="startLeftMove(event)"/>
+		<mx:Button x="17" y="372" label="Apply"/>
+	</mx:Canvas>
+	<fx:Script>
+		<![CDATA[
+			import mx.containers.Canvas;
+			import mx.containers.Panel;
+			import mx.containers.VBox;
+			import mx.controls.Alert;
+			import mx.controls.Button;
+			import mx.controls.Label;
+			import mx.events.MenuEvent;
+			import mx.utils.object_proxy;
+			
+			import spark.primitives.Rect;
+			
+			
+			
+			
+			
+			[Bindable]
+			public var groupHeight:int = 650;
+			[Bindable]
+			public var groupWidth:int = 1366;
+			
+			private var yPositionPointer:int = 0;
+			
+			public var templateArray:Array = new Array();
+			
+			public function insertTemplate(event:MenuEvent):void //function for inserting template
+			{
+				if (event.item.@data != "top") {
+					if(event.item.@label == "New Template"){ //when New Template Button is clicked
+						var loadTemplate:Button = new Button(); //making loadButton
+						loadTemplate.label = "load Button";
+						loadTemplate.addEventListener(MouseEvent.CLICK, addChildPanel);
+						loadTemplate.verticalCenter = 0;
+						loadTemplate.right  = 20;
+						
+						var myTemplate:Template = new Template(); //making template
+						myTemplate.templateID = yPositionPointer/200;
+						myTemplate.y = yPositionPointer;
+						myTemplate.settingsImage.addEventListener(MouseEvent.CLICK, startRightMove);
+						myTemplate.addElement(loadTemplate);
+						templateArray.push(myTemplate);
+						drawCanvas.addElement(myTemplate);
+						yPositionPointer = yPositionPointer + 200;	
+					}
+					
+					if(event.item.@label == "New Project"){//when New Project Button is clicked
+						for(var i2:int; i2 < templateArray.length; i2++){
+							templateArray.pop();
+						}
+						drawCanvas.removeAllElements();
+						drawCanvas.graphics.clear();
+						yPositionPointer = 0;
+					}
+					
+				}
+			}
+			
+			public function startRightMove(event:Event):void{
+				movePanelRight.play();
+			}
+			public function startLeftMove(event:Event):void{
+				movePanelLeft.play();
+			}
+			
+			public function clearPanel(event:Event):void{
+				var myTemplate:Template = Template(event.target.parent);
+				myTemplate.removeElementAt(1);
+								
+			}
+			
+
+
+			
+			public function addChildPanel(event:Event):void{ //adds triangle
+				var myTemplate:Template = Template(event.target.parent);
+				var parentID:int = myTemplate.templateID;
+				
+				
+				var newTemplate:Template = new Template();
+				newTemplate.y = yPositionPointer;
+				newTemplate.x = 1500;
+				
+				templateArray.push(newTemplate);
+				drawCanvas.addElement(newTemplate);
+				
+				drawCanvas.graphics.beginFill(0xFFCC00);
+				drawCanvas.graphics.moveTo(0,templateArray[parentID].y+templateArray[parentID].height);
+				drawCanvas.graphics.lineTo(newTemplate.x,newTemplate.y);
+				drawCanvas.graphics.lineTo(newTemplate.x, newTemplate.y+90);
+				drawCanvas.graphics.lineTo(0,templateArray[parentID].y+templateArray[parentID].height);
+				
+				
+				yPositionPointer = yPositionPointer + 200;	
+				
+			}
+			
+			public function generateEquation():void
+			{
+				Alert.show(templateArray[1]);
+			}
+			
+			
+			public function scaleGroup():void
+			{
+				myGroup.scaleX = mySlider.value;
+				myGroup.scaleY = mySlider.value;
+			}
+			
+			
+			public function generateTickNumbers(event:Event):void
+			{	
+				worldLineTime.removeAllChildren();
+				var i:int;
+				while(i <width)
+				{
+					var myTextField:Label = new Label();
+					var tempValue:int = i/(10*mySlider.value);
+					myTextField.text = tempValue.toString();
+					myTextField.x = i-10;
+					worldLineTime.addElement(myTextField);
+					i = i + 100;	
+				}
+			}
+			
+			public function generateTicks(event:Event):void
+			{
+				var i:int;
+				while(i < width)
+				{
+					worldLineTick.graphics.lineStyle(1, 0x990000, .75);
+					worldLineTick.graphics.beginFill(0x00FF00);
+					
+					worldLineTick.graphics.moveTo(i, worldLineTick.height); 
+					worldLineTick.graphics.lineTo(i, worldLineTick.height - 10);
+					
+					i = i + 100;	
+				}
+				
+				i = 0;
+				while(i < width)
+				{
+					worldLineTick.graphics.lineStyle(1, 0x990000, .75);
+					worldLineTick.graphics.beginFill(0x00FF00);
+					
+					worldLineTick.graphics.moveTo(i, worldLineTick.height); 
+					worldLineTick.graphics.lineTo(i, worldLineTick.height - 5);
+					
+					i = i + 10;	
+				}
+			}
+			
+			public function moveSidePanel(event:Event):void{
+				var myCanvas:Object = event.currentTarget;
+				myCanvas.startDrag();
+			}
+			
+			public function stopMoveSidePanel(event:Event):void{
+				var myCanvas:Object = event.currentTarget;
+				myCanvas.stopDrag();
+			}
+
+		]]>
+	</fx:Script>
+	
+
+</s:WindowedApplication>
