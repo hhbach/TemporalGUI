@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <s:WindowedApplication xmlns:fx="http://ns.adobe.com/mxml/2009" 
 					   xmlns:s="library://ns.adobe.com/flex/spark" 
-					   xmlns:mx="library://ns.adobe.com/flex/mx" width="1366" height="768">
+					   xmlns:mx="library://ns.adobe.com/flex/mx" initialize="maximizeWindows();">
 	<fx:Style source="TemporalGUI.css"/>
 	
 	
@@ -23,14 +23,14 @@
 
 	
 	<mx:Canvas id="worldLineTime" backgroundColor="#979795" height="20" width="100%" y="25" alpha=".5" left="20"/>
-	<mx:Canvas id="worldLineTick" backgroundColor="#979795" height="20" width="100%" y="47" alpha=".5" initialize="generateTicks(event)" left="20"/>
+	<mx:Canvas id="worldLineTick" backgroundColor="#979795" height="20" width="100%" y="47" alpha=".5" initialize="generateTicks()" left="20"/>
 		
 	
 
 	
-	<s:Scroller left="0" top="75" height="670" width="1355">
+	<s:Scroller left="0" top="75" height="100%" width="100%">
 
-	<s:Group id="myGroup" left="10"  width="{groupWidth}" height="{groupHeight}" >
+	<s:Group id="myGroup" left="10"  width="100%" height="100%" >
 		<mx:Canvas  id="drawCanvas">
 		</mx:Canvas>
 
@@ -69,9 +69,13 @@
 	
 	<mx:Slider id="mySlider" right="10" bottom="10" width="166" height="20"
 			   change="scaleGroup();generateTickNumbers(event)" labels="[.01X, 3X]" liveDragging="true" maximum="3"
-			   minimum=".01" value="1" initialize="generateTickNumbers(event)">
+			   minimum=".01" value="1" creationComplete="generateTickNumbers(event); generateTicks()">
 	</mx:Slider>
 	<mx:Canvas id="sidePanel" x="-200" y="193" width="175" height="400" borderStyle="solid" backgroundColor="White" mouseDown="moveSidePanel(event)" mouseUp="stopMoveSidePanel(event)">
+		<s:Form id="sidePanelForm">
+			<mx:Label text="Panel Index"/>
+			<mx:Label id="sidePanelID"/>
+		</s:Form>
 		<mx:Button x="95" y="372" label="Okay" click="startLeftMove(event)"/>
 		<mx:Button x="17" y="372" label="Apply"/>
 	</mx:Canvas>
@@ -99,23 +103,22 @@
 			
 			private var yPositionPointer:int = 0;
 			
+			
+			public var selectedPanel;
 			public var templateArray:Array = new Array();
 			
-			public function insertTemplate(event:MenuEvent):void //function for inserting template
+			public function insertTemplate(event:MenuEvent):void //function for  inserting new template
 			{
 				if (event.item.@data != "top") {
 					if(event.item.@label == "New Template"){ //when New Template Button is clicked
-						var loadTemplate:Button = new Button(); //making loadButton
-						loadTemplate.label = "load Button";
-						loadTemplate.addEventListener(MouseEvent.CLICK, addChildPanel);
-						loadTemplate.verticalCenter = 0;
-						loadTemplate.right  = 20;
+
 						
 						var myTemplate:Template = new Template(); //making template
 						myTemplate.templateID = yPositionPointer/200;
 						myTemplate.y = yPositionPointer;
 						myTemplate.settingsImage.addEventListener(MouseEvent.CLICK, startRightMove);
-						myTemplate.addElement(loadTemplate);
+						myTemplate.intersectButton.addEventListener(MouseEvent.CLICK, addChildPanel);
+
 						templateArray.push(myTemplate);
 						drawCanvas.addElement(myTemplate);
 						yPositionPointer = yPositionPointer + 200;	
@@ -134,7 +137,10 @@
 			}
 			
 			public function startRightMove(event:Event):void{
+				var myTemplate:Template = Template(event.target.parent.parent);
 				movePanelRight.play();
+				selectedPanel = myTemplate.templateID;
+				sidePanelID.text = selectedPanel;
 			}
 			public function startLeftMove(event:Event):void{
 				movePanelLeft.play();
@@ -178,10 +184,12 @@
 			}
 			
 			
-			public function scaleGroup():void
+			public function scaleGroup():void //when the slider is dragged
 			{
 				myGroup.scaleX = mySlider.value;
 				myGroup.scaleY = mySlider.value;
+				worldLineTime.left = 20*mySlider.value;
+				worldLineTick.left = 20*mySlider.value;
 			}
 			
 			
@@ -198,9 +206,10 @@
 					worldLineTime.addElement(myTextField);
 					i = i + 100;	
 				}
+				
 			}
 			
-			public function generateTicks(event:Event):void
+			public function generateTicks():void
 			{
 				var i:int;
 				while(i < width)
@@ -222,7 +231,6 @@
 					
 					worldLineTick.graphics.moveTo(i, worldLineTick.height); 
 					worldLineTick.graphics.lineTo(i, worldLineTick.height - 5);
-					
 					i = i + 10;	
 				}
 			}
@@ -235,6 +243,10 @@
 			public function stopMoveSidePanel(event:Event):void{
 				var myCanvas:Object = event.currentTarget;
 				myCanvas.stopDrag();
+			}
+			
+			public function maximizeWindows():void{ //needed for maximizing windows to fit to screen
+				nativeWindow.maximize();
 			}
 
 		]]>
