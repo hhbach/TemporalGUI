@@ -9,7 +9,7 @@ package
 
 	public class PointParser extends FileReference
 	{
-		var mPoints:Array;
+		private var mPoints:Array;
 		
 		public function PointParser()
 		{
